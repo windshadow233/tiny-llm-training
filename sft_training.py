@@ -64,7 +64,7 @@ def train(args):
 
     logging.info("Model loaded successfully.")
 
-    r = args.local_r
+    r = args.lora_r
     alpha = args.lora_alpha
     dropout = args.lora_dropout
     # 使用LoRA
@@ -146,13 +146,13 @@ def train(args):
                     prompt_text = tokenizer.decode(prompt, skip_special_tokens=True)
                     gen_text = tokenizer.decode(pred, skip_special_tokens=True)
                     answer_text = tokenizer.decode(input_ids[bos_pos + 1:], skip_special_tokens=True)
-                    print(color_text("\n=== Prompt ===", "cyan"))
+                    print(color_text("\n" + "Prompt".center(80, "="), "cyan"))
                     print(prompt_text)
 
-                    print(color_text("\n=== Generated Response ===", "green"))
+                    print(color_text("\n" + "Generated Response".center(80, "="), "green"))
                     print(gen_text)
 
-                    print(color_text("\n=== Ground Truth Answer ===", "yellow"))
+                    print(color_text("\n" + "Ground Truth Answer".center(80, "="), "yellow"))
                     print(answer_text)
 
                     print(color_text("=" * 80, "magenta"))
