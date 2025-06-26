@@ -120,6 +120,8 @@ def train(args):
                 outputs = model(**batch)
                 loss = outputs.loss
                 accelerator.backward(loss)
+                if accelerator.sync_gradients:
+                    accelerator.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], 1.0)
                 optimizer.step()
                 optimizer.zero_grad()
                 scheduler.step()
