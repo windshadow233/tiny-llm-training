@@ -9,25 +9,9 @@ from peft import LoraConfig, get_peft_model, TaskType
 from tqdm import tqdm
 
 from SFT.dataset import SFTDataset
-from utils import color_text
+from utils import color_text, count_params, load_model
 
 logging.basicConfig(level=logging.INFO)
-
-
-def count_params(model):
-    count_all = [i.numel() for i in model.parameters()]
-    count_all = sum(count_all) / 1_000_000_000
-
-    count_require = [i.numel() for i in model.parameters() if i.requires_grad]
-    count_require = sum(count_require) / 1000_000_000
-
-    ratio = count_require / count_all
-
-    return {
-        'count_require': count_require,
-        'count_all': count_all,
-        'ratio': ratio
-    }
 
 
 def parse_args():
@@ -36,7 +20,7 @@ def parse_args():
     parser.add_argument("--max_length", '-l', type=int, default=256)
     parser.add_argument("--output_dir", '-o', type=str, default="model/actor")
 
-    parser.add_argument("--batch_size", '-b', type=int, default=2)
+    parser.add_argument("--batch_size", '-b', type=int, default=8)
     parser.add_argument("--learning_rate", '-lr', type=float, default=1e-4)
     parser.add_argument("--num_epochs", '-e', type=int, default=3)
     parser.add_argument("--gradient_accumulation_steps", '-s', type=int, default=32)
@@ -60,7 +44,7 @@ def train(args):
     logging.info(f"Data loaded successfully. Dataset size: {len(dataset)}")
 
     # 加载模型
-    model = AutoModelForCausalLM.from_pretrained('m-a-p/CT-LLM-Base', trust_remote_code=True)
+    model = load_model('m-a-p/CT-LLM-Base')
 
     logging.info("Model loaded successfully.")
 

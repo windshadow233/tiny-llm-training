@@ -9,7 +9,8 @@ class RewardModel(nn.Module):
         super().__init__()
         self.base_model = AutoModelForCausalLM.from_pretrained(
             'm-a-p/CT-LLM-Base',
-            trust_remote_code=True
+            trust_remote_code=True,
+            torch_dtype=torch.float16
         )
         self.base_model.requires_grad_(False)
         self.v_head = nn.Linear(self.base_model.config.hidden_size, 1)
@@ -54,5 +55,5 @@ class RewardModel(nn.Module):
     def from_pretrained(cls, model_path):
         model = cls()
         model.v_head.load_state_dict(torch.load(os.path.join(model_path, 'v_head.pt')))
-        model.base_model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True)
+        model.base_model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, torch_dtype=torch.float16)
         return model

@@ -44,6 +44,3 @@ class SFTDataset(Dataset):
             "attention_mask": torch.tensor(attention_mask, dtype=torch.long),
             "labels": torch.tensor(labels, dtype=torch.long)
         }
-
-    def decode(self, input_ids):
-        return self.tokenizer.decode(input_ids, skip_special_tokens=True)
