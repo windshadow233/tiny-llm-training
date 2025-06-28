@@ -2,6 +2,7 @@ from transformers import AutoTokenizer
 from datasets import load_dataset
 import torch
 from torch.utils.data import Dataset
+from utils import MODEL_NAME
 
 
 class RMDataset(Dataset):
@@ -12,7 +13,7 @@ class RMDataset(Dataset):
             self.dataset = dataset.select(range(start, end))
         else:
             self.dataset = dataset
-        self.tokenizer = AutoTokenizer.from_pretrained('m-a-p/CT-LLM-Base', trust_remote_code=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, trust_remote_code=True)
         self.max_length = max_length
 
     def __len__(self):
@@ -32,7 +33,7 @@ class RMDataset(Dataset):
         instruction = data['query']
         chosen = data['chosen']
         rejected = data['rejected']
-        prompt = f"指令: {instruction}\n输出: "
+        prompt = f"指令:{instruction}\n输出:"
         prompt_ids = self.tokenizer.encode(prompt, add_special_tokens=False)
         chosen_ids = self.tokenizer.encode(chosen, add_special_tokens=False)
         rejected_ids = self.tokenizer.encode(rejected, add_special_tokens=False)

@@ -2,22 +2,28 @@ from transformers import AutoModelForCausalLM
 from torch import nn
 import torch
 import os
+from utils import MODEL_NAME
 
 
 class RewardModel(nn.Module):
     def __init__(self) -> None:
         super().__init__()
         self.base_model = AutoModelForCausalLM.from_pretrained(
-            'm-a-p/CT-LLM-Base',
+            MODEL_NAME,
             trust_remote_code=True,
-            torch_dtype=torch.float16
+            torch_dtype='auto'
         )
         self.base_model.requires_grad_(False)
-        self.v_head = nn.Linear(self.base_model.config.hidden_size, 1)
+        self.v_head = nn.Linear(self.base_model.config.hidden_size, 1, bias=False)
         self.eos_token_id = self.base_model.config.eos_token_id
+        self.v_head_dtype = self.v_head.weight.dtype
+        
+    @property
+    def device(self):
+        return self.base_model.device
         
     def forward(self, input_ids, attention_mask):
-        hidden_states = self.base_model(input_ids, attention_mask=attention_mask, output_hidden_states=True).hidden_states[-1]
+        hidden_states = self.base_model(input_ids, attention_mask=attention_mask, output_hidden_states=True).hidden_states[-1].to(self.v_head_dtype)
         v = self.v_head(hidden_states).squeeze(-1)
         batchsize = len(input_ids) // 2
         
@@ -26,9 +32,9 @@ class RewardModel(nn.Module):
         value_rejected = 0.0
 
         for chosen, rejected, v_chosen, v_rejected in zip(
-            input_ids[:batchsize], 
-            input_ids[batchsize:], 
-            v[:batchsize], 
+            input_ids[:batchsize],
+            input_ids[batchsize:],
+            v[:batchsize],
             v[batchsize:]
         ):
             diff_start = (chosen != rejected).nonzero(as_tuple=True)[0][0]
@@ -55,5 +61,5 @@ class RewardModel(nn.Module):
     def from_pretrained(cls, model_path):
         model = cls()
         model.v_head.load_state_dict(torch.load(os.path.join(model_path, 'v_head.pt')))
-        model.base_model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, torch_dtype=torch.float16)
+        model.base_model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, torch_dtype='auto')
         return model

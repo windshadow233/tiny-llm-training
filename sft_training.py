@@ -1,15 +1,17 @@
-from transformers import AutoModelForCausalLM, get_scheduler
+from transformers import get_scheduler
 import torch
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 from accelerate import Accelerator
 import logging
 import argparse
 from peft import LoraConfig, get_peft_model, TaskType
 from tqdm import tqdm
+import sys
 
 from SFT.dataset import SFTDataset
-from utils import color_text, count_params, load_model
+from utils import color_text, count_params, load_model, center, MODEL_NAME
 
 logging.basicConfig(level=logging.INFO)
 
@@ -37,14 +39,15 @@ def train(args):
     batch_size = args.batch_size
 
     # 读取数据
-    dataset = SFTDataset('hfl/alpaca_zh_51k', split='train', max_length=max_length)
+    dataset = SFTDataset('shibing624/alpaca-zh', split='train', max_length=max_length)
     tokenizer = dataset.tokenizer
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=8)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    writer = SummaryWriter(log_dir='runs/sft')
 
     logging.info(f"Data loaded successfully. Dataset size: {len(dataset)}")
 
     # 加载模型
-    model = load_model('m-a-p/CT-LLM-Base')
+    model = load_model(MODEL_NAME)
 
     logging.info("Model loaded successfully.")
 
@@ -99,19 +102,21 @@ def train(args):
     logging.info("Starting training...")
 
     for epoch in range(num_epochs):
-        for step, batch in tqdm(enumerate(dataloader, 1), desc=f"Epoch {epoch + 1}/{num_epochs}", total=len(dataloader)):
+        for step, batch in tqdm(enumerate(dataloader, 1), dynamic_ncols=True, desc=f"Epoch {epoch + 1}/{num_epochs}", total=len(dataloader)):
             with accelerator.accumulate(model):
                 outputs = model(**batch)
                 loss = outputs.loss
                 accelerator.backward(loss)
                 if accelerator.sync_gradients:
-                    accelerator.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], 1.0)
-                optimizer.step()
-                optimizer.zero_grad()
-                scheduler.step()
+                    accelerator.clip_grad_norm_(lora_parameters, 1.0)
+                    optimizer.step()
+                    scheduler.step()
+                    optimizer.zero_grad()
+            global_step = epoch * len(dataloader) + step
+            writer.add_scalar('Loss/SFT', loss.item(), global_step)
 
             if step % 100 == 0:
-                print(f"Step {step}, Loss: {loss.item()}")
+                print(f"Step {step}, Loss: {loss.item():.4f}")
                 input_ids = batch['input_ids'][0]
                 bos_pos = (input_ids == tokenizer.bos_token_id).nonzero(as_tuple=True)[0].item()
                 prompt = input_ids[:bos_pos + 1]
@@ -127,29 +132,30 @@ def train(args):
                         do_sample=True,
                         top_p=0.9,
                         temperature=0.7,
-                        repetition_penalty=1.2,
+                        repetition_penalty=1.5,
                     )[0][bos_pos + 1:]
                     prompt_text = tokenizer.decode(prompt, skip_special_tokens=True)
                     gen_text = tokenizer.decode(pred, skip_special_tokens=True)
                     answer_text = tokenizer.decode(input_ids[bos_pos + 1:], skip_special_tokens=True)
-                    print(color_text("\n" + "Prompt".center(80, "="), "cyan"))
+                    print(color_text("\n" + center("Prompt"), "cyan"))
                     print(prompt_text)
 
-                    print(color_text("\n" + "Generated Response".center(80, "="), "green"))
+                    print(color_text("\n" + center("Generated Response"), "green"))
                     print(gen_text)
 
-                    print(color_text("\n" + "Ground Truth Answer".center(80, "="), "yellow"))
+                    print(color_text("\n" + center("Ground Truth Answer"), "yellow"))
                     print(answer_text)
 
-                    print(color_text("=" * 80, "magenta"))
+                    print(color_text(center(""), "magenta"))
                     model.train()
 
     output_dir = args.output_dir
     model.save_pretrained(output_dir)
     tokenizer.save_pretrained(output_dir)
+    logging.info("Training completed and model saved.")
 
 
 if __name__ == "__main__":
     args = parse_args()
     train(args)
-    logging.info("Training completed and model saved.")
+    sys.exit(0)

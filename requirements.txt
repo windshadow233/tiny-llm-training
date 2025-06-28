@@ -4,3 +4,4 @@ datasets~=3.6.0
 accelerate~=1.8.1
 peft~=0.15.2
 tqdm~=4.67.1
+tensorboard~=2.19.0
