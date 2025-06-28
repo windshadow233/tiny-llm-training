@@ -2,12 +2,13 @@ from transformers import AutoTokenizer
 from datasets import load_dataset
 import torch
 from torch.utils.data import Dataset
+from utils import MODEL_NAME
 
 
 class SFTDataset(Dataset):
     def __init__(self, dataset_name, split='train', max_length=512):
         self.dataset = load_dataset(dataset_name, split=split)
-        self.tokenizer = AutoTokenizer.from_pretrained('m-a-p/CT-LLM-Base', trust_remote_code=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, trust_remote_code=True)
         self.max_length = max_length
 
     def __len__(self):
@@ -19,9 +20,9 @@ class SFTDataset(Dataset):
         input = data['input']
         output = data['output']
         if input:
-            prompt = f"指令: {instruction}\n输入: {input}\n输出: "
+            prompt = f"指令:{instruction}\n{input}\n输出:"
         else:
-            prompt = f"指令: {instruction}\n输出: "
+            prompt = f"指令:{instruction}\n输出:"
         prompt_ids = self.tokenizer.encode(prompt, add_special_tokens=False)
         response_ids = self.tokenizer.encode(output, add_special_tokens=False)
 

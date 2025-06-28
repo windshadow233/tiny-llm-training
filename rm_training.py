@@ -1,15 +1,15 @@
 from transformers import get_scheduler
-import torch
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
 from accelerate import Accelerator
 import logging
 import argparse
 from tqdm import tqdm
+import sys
 
 from RM.dataset import RMDataset, collate_fn
 from RM.model import RewardModel
-from utils import color_text
+from utils import color_text, center
 
 logging.basicConfig(level=logging.INFO)
 
@@ -20,8 +20,8 @@ def parse_args():
     parser.add_argument("--max_length", '-l', type=int, default=256)
     parser.add_argument("--output_dir", '-o', type=str, default='model/reward_model')
 
-    parser.add_argument("--batch_size", '-b', type=int, default=4)
-    parser.add_argument("--learning_rate", '-lr', type=float, default=1e-4)
+    parser.add_argument("--batch_size", '-b', type=int, default=32)
+    parser.add_argument("--learning_rate", '-lr', type=float, default=5e-5)
     parser.add_argument("--num_epochs", '-e', type=int, default=3)
     parser.add_argument("--gradient_accumulation_steps", '-s', type=int, default=32)
 
@@ -41,7 +41,10 @@ def train(args):
     logging.info("Model loaded successfully.")
 
     optimizer = AdamW(model.v_head.parameters(), lr=args.learning_rate)
-    accelerator = Accelerator(gradient_accumulation_steps=args.gradient_accumulation_steps, mixed_precision='fp16')
+    accelerator = Accelerator(
+        mixed_precision='fp16',
+        gradient_accumulation_steps=args.gradient_accumulation_steps
+    )
 
     accumulation_steps = args.gradient_accumulation_steps
     num_update_steps_per_epoch = len(dataset) // args.batch_size // accumulation_steps
@@ -60,20 +63,20 @@ def train(args):
     logging.info("Starting training...")
 
     for epoch in range(args.num_epochs):
-        for step, batch in tqdm(enumerate(dataloader, 1), desc=f"Epoch {epoch + 1}/{args.num_epochs}", total=len(dataloader)):
+        for step, batch in tqdm(enumerate(dataloader, 1), dynamic_ncols=True, desc=f"Epoch {epoch + 1}/{args.num_epochs}", total=len(dataloader)):
             with accelerator.accumulate(model):
                 loss, value_chosen, value_reject = model(**batch)
                 accelerator.backward(loss)
                 if accelerator.sync_gradients:
-                    accelerator.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], 1.0)
-                optimizer.step()
-                optimizer.zero_grad()
-                scheduler.step()
+                    accelerator.clip_grad_norm_(model.v_head.parameters(), 1.0)
+                    optimizer.step()
+                    scheduler.step()
+                    optimizer.zero_grad()
 
             if step % 100 == 0:
-                print(f"Step {step}, Loss: {loss.item()}")
-                print(color_text("\n" + f"Chosen Reward: {value_chosen:.2f}".center(80, "="), "cyan"))
-                print(color_text("\n" + f"Rejected Reward: {value_reject:.2f}".center(80, "="), "green"))
+                print(f"Step {step}, Loss: {loss.item():.4f}")
+                print(color_text("\n" + center(f"Chosen Reward: {value_chosen:.2f}"), "cyan"))
+                print(color_text("\n" + center(f"Rejected Reward: {value_reject:.2f}"), "green"))
 
     model.save_pretrained(args.output_dir)
     logging.info("Training completed and model saved.")
@@ -82,3 +85,4 @@ def train(args):
 if __name__ == "__main__":
     args = parse_args()
     train(args)
+    sys.exit(0)

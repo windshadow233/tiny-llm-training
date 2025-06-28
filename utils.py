@@ -1,7 +1,10 @@
 import os
-import torch
+import shutil
 from transformers import AutoModelForCausalLM
 from peft import PeftConfig, PeftModel
+
+
+MODEL_NAME = 'm-a-p/CT-LLM-Base'
 
 
 def color_text(text, color):
@@ -17,6 +20,12 @@ def color_text(text, color):
         'reset': '\033[0m'
     }
     return f"{COLOR_CODES.get(color, '')}{text}{COLOR_CODES['reset']}"
+
+
+def center(text, fillchar="="):
+    width = shutil.get_terminal_size().columns
+    wrapped = text.center(width, fillchar)
+    return wrapped
 
 
 def count_params(model):
