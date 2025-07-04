@@ -113,7 +113,7 @@ def train(args):
                     scheduler.step()
                     optimizer.zero_grad()
             global_step = epoch * len(dataloader) + step
-            writer.add_scalar('Loss/SFT', loss.item(), global_step)
+            writer.add_scalar('SFT/Loss', loss.item(), global_step)
 
             if step % 100 == 0:
                 print(f"Step {step}, Loss: {loss.item():.4f}")

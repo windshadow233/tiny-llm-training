@@ -180,10 +180,10 @@ def train(args):
                     optimizer_critic.zero_grad()
                     
             global_step = epoch * len(dataloader) + step
-            writer.add_scalar('Loss/actor', loss_actor.item(), global_step)
-            writer.add_scalar('Loss/critic', loss_critic.item(), global_step)
-            writer.add_scalar('Reward/mean', reward.mean().item(), global_step)
-            writer.add_scalar('KL/mean', -kl.mean().item(), global_step)
+            writer.add_scalar('RLHF/Actor-Loss', loss_actor.item(), global_step)
+            writer.add_scalar('RLHF/Critic-Loss', loss_critic.item(), global_step)
+            writer.add_scalar('RLHF/Reward', reward.mean().item(), global_step)
+            writer.add_scalar('RLHF/KL', -kl.mean().item(), global_step)
 
             if step % 10 == 0 and accelerator.is_main_process:
                 print(f"Step {step}, Actor Loss: {loss_actor.item():.4f}, Critic Loss: {loss_critic.item():.4f}, Reward: {reward.mean().item():.4f}")

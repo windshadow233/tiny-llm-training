@@ -75,10 +75,10 @@ def train(args):
                     scheduler.step()
                     optimizer.zero_grad()
                 global_step = epoch * len(dataloader) + step
-                writer.add_scalar('Loss/Reward-Model', loss.item(), global_step)
-                writer.add_scalar('Value/Chosen', value_chosen, global_step)
-                writer.add_scalar('Value/Reject', value_reject, global_step)
-                writer.add_scalar('Value/Gap', value_chosen - value_reject, global_step)
+                writer.add_scalar('RM/Loss', loss.item(), global_step)
+                writer.add_scalar('RM/Chosen-Value', value_chosen, global_step)
+                writer.add_scalar('RM/Rejected-Value', value_reject, global_step)
+                writer.add_scalar('RM/Value-Gap', value_chosen - value_reject, global_step)
 
             if step % 100 == 0:
                 print(f"Step {step}, Loss: {loss.item():.4f}")
