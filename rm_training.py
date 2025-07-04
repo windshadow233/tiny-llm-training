@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument("--gradient_accumulation_steps", '-s', type=int, default=8)
 
     parser.add_argument("--data_range_start", '-ds', type=int, default=0)
-    parser.add_argument("--data_range_end", '-de', type=int, default=75000)
+    parser.add_argument("--data_range_end", '-de', type=int, default=25000)
 
     return parser.parse_args()
 
