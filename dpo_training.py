@@ -36,7 +36,7 @@ def parse_args():
 def train(args):
     batch_size = args.batch_size
     max_length = args.max_length
-    dataset = DPODataset('OpenLLMAI/comparison_data', split='train', data_range=(args.data_range_start, args.data_range_end), max_length=max_length)
+    dataset = DPODataset(data_range=(args.data_range_start, args.data_range_end), max_length=max_length)
     tokenizer = dataset.tokenizer
     dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=collate_fn, shuffle=True)
     writer = SummaryWriter(log_dir='runs/dpo')
@@ -126,8 +126,8 @@ def train(args):
                 bos_pos = (input_ids == bos).nonzero(as_tuple=True)[0].item()
                 prompt = input_ids[:bos_pos + 1]
                 attention_mask = batch['attention_mask'][0][:bos_pos + 1]
-                with torch.no_grad():
-                    model.eval()
+                model.eval()
+                with torch.inference_mode():
                     pred = model.generate(
                         input_ids=prompt[None],
                         attention_mask=attention_mask[None],
@@ -152,7 +152,8 @@ def train(args):
                     print(answer_text)
 
                     print(color_text(center(""), "magenta"))
-                    model.train()
+                    
+                model.train()
 
     output_dir = args.output_dir
     model.save_pretrained(output_dir)

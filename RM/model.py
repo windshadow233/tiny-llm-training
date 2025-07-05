@@ -37,9 +37,12 @@ class RewardModel(nn.Module):
             v[:batchsize],
             v[batchsize:]
         ):
-            diff_start = (chosen != rejected).nonzero(as_tuple=True)[0][0]
-            end_chosen = (chosen == self.eos_token_id).nonzero(as_tuple=True)[0][0]
-            end_reject = (rejected == self.eos_token_id).nonzero(as_tuple=True)[0][0]
+            diff_start = (chosen != rejected).nonzero(as_tuple=True)[0][0].item()
+            eos_chosen = (chosen == self.eos_token_id).nonzero(as_tuple=True)[0]
+            end_chosen = eos_chosen[0].item() if eos_chosen.numel() > 0 else len(chosen) - 1
+
+            eos_reject = (rejected == self.eos_token_id).nonzero(as_tuple=True)[0]
+            end_reject = eos_reject[0].item() if eos_reject.numel() > 0 else len(rejected) - 1
             
             end = max(end_chosen, end_reject)
             v_chosen = v_chosen[diff_start:end + 1]

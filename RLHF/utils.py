@@ -26,7 +26,7 @@ def generate(model, input_ids, attention_mask, pad=0, eos=2, prompt_length=256):
     generated_ids = model.generate(
             input_ids=input_ids,
             attention_mask=attention_mask,
-            max_new_tokens=256,
+            max_new_tokens=128,
             pad_token_id=pad,
             eos_token_id=eos,
             do_sample=True,
@@ -67,7 +67,13 @@ def generate_batch_data(model, model_ref, model_critic, model_reward, input_ids,
 
 
 def get_eos_position(generated_ids, eos=2):
-    return (generated_ids == eos).nonzero(as_tuple=True)[1].tolist()
+    # generated_ids: [batch_size, seq_len]
+    batch_size, seq_len = generated_ids.shape
+    eos_positions = []
+    for i in range(batch_size):
+        pos = (generated_ids[i] == eos).nonzero(as_tuple=True)
+        eos_positions.append(pos[0].item() if pos[0].numel() > 0 else seq_len - 1)
+    return eos_positions
 
 
 @torch.no_grad()
@@ -101,7 +107,7 @@ def calculate_td_delta(reward_kl, value_old, gamma=1.0, prompt_length=0):
 
 
 @torch.no_grad()
-def calculate_advantage(td_delta, lmbda=0.95, gamma=1):
+def calculate_advantage(td_delta, lmbda=0.95, gamma=1.0):
     advantage = []
     adv = 0.0
     for delta in td_delta.flip(dims=[1]).unbind(dim=1):

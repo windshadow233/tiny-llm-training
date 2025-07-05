@@ -39,7 +39,7 @@ def train(args):
     batch_size = args.batch_size
 
     # 读取数据
-    dataset = SFTDataset('shibing624/alpaca-zh', split='train', max_length=max_length)
+    dataset = SFTDataset(max_length=max_length)
     tokenizer = dataset.tokenizer
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     writer = SummaryWriter(log_dir='runs/sft')
@@ -121,8 +121,8 @@ def train(args):
                 bos_pos = (input_ids == tokenizer.bos_token_id).nonzero(as_tuple=True)[0].item()
                 prompt = input_ids[:bos_pos + 1]
                 attention_mask = batch['attention_mask'][0][:bos_pos + 1]
-                with torch.no_grad():
-                    model.eval()
+                model.eval()
+                with torch.inference_mode():
                     pred = model.generate(
                         input_ids=prompt[None],
                         attention_mask=attention_mask[None],
@@ -147,7 +147,7 @@ def train(args):
                     print(answer_text)
 
                     print(color_text(center(""), "magenta"))
-                    model.train()
+                model.train()
 
     output_dir = args.output_dir
     model.save_pretrained(output_dir)

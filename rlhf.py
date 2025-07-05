@@ -36,8 +36,7 @@ def parse_args():
 def train(args):
     batch_size = args.batch_size
     max_length = args.max_length
-    dataset = RLHFDataset('OpenLLMAI/comparison_data', split='train',
-                          data_range=(args.data_range_start, args.data_range_end), max_length=max_length)
+    dataset = RLHFDataset(data_range=(args.data_range_start, args.data_range_end), max_length=max_length)
     tokenizer = dataset.tokenizer
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     writer = SummaryWriter(log_dir='runs/rlhf')
@@ -195,7 +194,7 @@ def train(args):
                 chosen_ids = batch['chosen'][0]
 
                 model_actor.eval()
-                with torch.no_grad():
+                with torch.inference_mode():
                     pred = model_actor.generate(
                         input_ids=prompt[None],
                         attention_mask=attention_mask[None],
@@ -207,19 +206,19 @@ def train(args):
                         temperature=0.7,
                         repetition_penalty=1.5,
                     )[0][bos_pos + 1:]
+                    prompt_text = tokenizer.decode(prompt, skip_special_tokens=True)
+                    gen_text = tokenizer.decode(pred, skip_special_tokens=True)
+                    answer_text = tokenizer.decode(chosen_ids, skip_special_tokens=True)
+
+                    print(color_text("\n" + center("Prompt"), "cyan"))
+                    print(prompt_text)
+                    print(color_text("\n" + center("Generated Response"), "green"))
+                    print(gen_text)
+                    print(color_text("\n" + center("Chosen Response"), "yellow"))
+                    print(answer_text)
+                    print(color_text(center(""), "magenta"))
 
                 model_actor.train()
-                prompt_text = tokenizer.decode(prompt, skip_special_tokens=True)
-                gen_text = tokenizer.decode(pred, skip_special_tokens=True)
-                answer_text = tokenizer.decode(chosen_ids, skip_special_tokens=True)
-
-                print(color_text("\n" + center("Prompt"), "cyan"))
-                print(prompt_text)
-                print(color_text("\n" + center("Generated Response"), "green"))
-                print(gen_text)
-                print(color_text("\n" + center("Chosen Response"), "yellow"))
-                print(answer_text)
-                print(color_text(center(""), "magenta"))
     
     output_dir = args.output_dir
     model_actor.save_pretrained(output_dir)

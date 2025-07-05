@@ -7,8 +7,8 @@ from RLHF.utils import pad_to_left
 
 
 class RLHFDataset(Dataset):
-    def __init__(self, dataset_name, split='train', data_range=None, max_length=512):
-        dataset = load_dataset(dataset_name, split=split)
+    def __init__(self, split='train', data_range=None, max_length=512):
+        dataset = load_dataset('OpenLLMAI/comparison_data', split=split)
         if isinstance(data_range, tuple) and len(data_range) == 2:
             start, end = data_range
             self.dataset = dataset.select(range(start, end))
@@ -28,7 +28,9 @@ class RLHFDataset(Dataset):
         prompt_ids = self.tokenizer.encode(prompt, add_special_tokens=False)
         chosen_ids = self.tokenizer.encode(chosen, add_special_tokens=False)
         prompt_ids = prompt_ids[:self.max_length - 1] + [self.tokenizer.bos_token_id]
-        chosen_ids = chosen_ids[:self.max_length - 1] + [self.tokenizer.eos_token_id]
+        chosen_ids = chosen_ids[:self.max_length]
+        if len(chosen_ids) < self.max_length:
+            chosen_ids += [self.tokenizer.eos_token_id]
         chosen_ids = chosen_ids + [self.tokenizer.pad_token_id] * (self.max_length - len(chosen_ids))
         
         input_ids, attention_mask = pad_to_left(prompt_ids, self.max_length, self.tokenizer.pad_token_id)

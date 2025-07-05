@@ -6,8 +6,8 @@ from utils import MODEL_NAME
 
 
 class DPODataset(Dataset):
-    def __init__(self, dataset_name, split='train', data_range=None, max_length=512):
-        dataset = load_dataset(dataset_name, split=split)
+    def __init__(self, split='train', data_range=None, max_length=512):
+        dataset = load_dataset('OpenLLMAI/comparison_data', split=split)
         if isinstance(data_range, tuple) and len(data_range) == 2:
             start, end = data_range
             self.dataset = dataset.select(range(start, end))
@@ -21,7 +21,9 @@ class DPODataset(Dataset):
     
     def build_inputs(self, prompt_ids, response_ids):
         input_ids = prompt_ids + [self.tokenizer.bos_token_id] + response_ids
-        input_ids = input_ids[:self.max_length - 1] + [self.tokenizer.eos_token_id]
+        input_ids = input_ids[:self.max_length]
+        if len(input_ids) < self.max_length:
+            input_ids += [self.tokenizer.eos_token_id]
         bos_pos = input_ids.index(self.tokenizer.bos_token_id)
         label_mask = [0] * (bos_pos + 1) + [1] * (len(input_ids) - bos_pos - 1)
         pad_len = self.max_length - len(input_ids)
