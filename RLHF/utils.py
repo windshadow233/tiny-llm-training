@@ -21,12 +21,12 @@ def pad_to_left(input_ids, max_length, pad_token_id=0):
     return input_ids, attention_mask
 
 
-@torch.no_grad()
+@torch.inference_mode()
 def generate(model, input_ids, attention_mask, pad=0, eos=2, prompt_length=256):
     generated_ids = model.generate(
             input_ids=input_ids,
             attention_mask=attention_mask,
-            max_new_tokens=256,
+            max_new_tokens=128,
             pad_token_id=pad,
             eos_token_id=eos,
             do_sample=True,
@@ -43,7 +43,7 @@ def calculate_action_logsoftmax(logits, chosen_ids):
     return log_probs.gather(2, chosen_ids.unsqueeze(-1)).squeeze(-1)
 
 
-@torch.no_grad()
+@torch.inference_mode()
 def generate_batch_data(model, model_ref, model_critic, model_reward, input_ids, attention_mask, pad=0, eos=2, prompt_length=256):
     
     model_device = model.device
@@ -70,7 +70,7 @@ def get_eos_position(generated_ids, eos=2):
     return (generated_ids == eos).nonzero(as_tuple=True)[1].tolist()
 
 
-@torch.no_grad()
+@torch.inference_mode()
 def calculate_reward_with_kl(end, log_prob_old, log_prob_ref, reward, coeff=0.1):
     """
     Calculate the reward with KL divergence penalty.
@@ -90,7 +90,7 @@ def calculate_reward_with_kl(end, log_prob_old, log_prob_ref, reward, coeff=0.1)
     return kl, reward_kl
 
 
-@torch.no_grad()
+@torch.inference_mode()
 def calculate_td_delta(reward_kl, value_old, gamma=1.0, prompt_length=0):
     V_s = value_old[:, :-1]
     V_next = value_old[:, 1:]
@@ -100,8 +100,8 @@ def calculate_td_delta(reward_kl, value_old, gamma=1.0, prompt_length=0):
     return td_delta[:, prompt_length - 1:]
 
 
-@torch.no_grad()
-def calculate_advantage(td_delta, lmbda=0.95, gamma=1):
+@torch.inference_mode()
+def calculate_advantage(td_delta, lmbda=0.95, gamma=1.0):
     advantage = []
     adv = 0.0
     for delta in td_delta.flip(dims=[1]).unbind(dim=1):

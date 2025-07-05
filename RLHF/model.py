@@ -38,7 +38,7 @@ class RewardModel(nn.Module):
         model.base_model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, torch_dtype='auto')
         return model
 
-    @torch.no_grad()
+    @torch.inference_mode()
     def get_reward(self, input_ids, attention_mask=None, values=None):
         if values is None:
             assert attention_mask is not None, "attention_mask must be provided if values are not given"

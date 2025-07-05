@@ -6,8 +6,8 @@ from utils import MODEL_NAME
 
 
 class SFTDataset(Dataset):
-    def __init__(self, dataset_name, split='train', max_length=512):
-        self.dataset = load_dataset(dataset_name, split=split)
+    def __init__(self, split='train', max_length=512):
+        self.dataset = load_dataset('shibing624/alpaca-zh', split=split)
         self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, trust_remote_code=True)
         self.max_length = max_length
 

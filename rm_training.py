@@ -27,13 +27,13 @@ def parse_args():
     parser.add_argument("--gradient_accumulation_steps", '-s', type=int, default=8)
 
     parser.add_argument("--data_range_start", '-ds', type=int, default=0)
-    parser.add_argument("--data_range_end", '-de', type=int, default=25000)
+    parser.add_argument("--data_range_end", '-de', type=int, default=75000)
 
     return parser.parse_args()
 
 
 def train(args):
-    dataset = RMDataset('OpenLLMAI/comparison_data', split='train', data_range=(args.data_range_start, args.data_range_end), max_length=args.max_length)
+    dataset = RMDataset(data_range=(args.data_range_start, args.data_range_end), max_length=args.max_length)
     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn)
     writer = SummaryWriter(log_dir='runs/reward_model')
 

@@ -6,8 +6,8 @@ from utils import MODEL_NAME
 
 
 class DPODataset(Dataset):
-    def __init__(self, dataset_name, split='train', data_range=None, max_length=512):
-        dataset = load_dataset(dataset_name, split=split)
+    def __init__(self, split='train', data_range=None, max_length=512):
+        dataset = load_dataset('OpenLLMAI/comparison_data', split=split)
         if isinstance(data_range, tuple) and len(data_range) == 2:
             start, end = data_range
             self.dataset = dataset.select(range(start, end))
