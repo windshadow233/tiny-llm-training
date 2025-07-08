@@ -144,14 +144,11 @@ def train(args):
                     answer_text = tokenizer.decode(input_ids[bos_pos + 1:], skip_special_tokens=True)
                     print(color_text("\n" + center("Prompt"), "cyan"))
                     print(prompt_text)
-
                     print(color_text("\n" + center("Generated Response"), "green"))
                     print(gen_text)
-
                     print(color_text("\n" + center("Chosen Response"), "yellow"))
                     print(answer_text)
-
-                    print(color_text(center(""), "magenta"))
+                    print(color_text("\n" + center(""), "magenta"))
                     
                 model.train()
 

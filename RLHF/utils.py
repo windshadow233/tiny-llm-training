@@ -22,7 +22,8 @@ def pad_to_left(input_ids, max_length, pad_token_id=0):
 
 
 @torch.no_grad()
-def generate(model, input_ids, attention_mask, pad=0, eos=2, prompt_length=256):
+def generate(model, input_ids, attention_mask, pad=0, eos=2):
+    prompt_length = input_ids.shape[1]
     generated_ids = model.generate(
             input_ids=input_ids,
             attention_mask=attention_mask,
@@ -44,13 +45,13 @@ def calculate_action_logsoftmax(logits, chosen_ids):
 
 
 @torch.no_grad()
-def generate_batch_data(model, model_ref, model_critic, model_reward, input_ids, attention_mask, pad=0, eos=2, prompt_length=256):
-    
+def generate_batch_data(model, model_ref, model_critic, model_reward, input_ids, attention_mask, pad=0, eos=2):
+    model.eval()
     model_device = model.device
     ref_device = model_ref.device
     reward_device = model_reward.device
     
-    generated_ids = generate(model, input_ids, attention_mask, pad, eos, prompt_length)
+    generated_ids = generate(model, input_ids, attention_mask, pad, eos)
     if len(generated_ids) == 0:
         return None, None, None, None, None, None
     generated_attention_mask = (generated_ids != pad).long()
@@ -62,7 +63,7 @@ def generate_batch_data(model, model_ref, model_critic, model_reward, input_ids,
     
     logits_ref = model_ref(generated_ids.to(ref_device), generated_attention_mask.to(ref_device)).logits.to(model_device)
     log_prob_ref = calculate_action_logsoftmax(logits_ref[:, :-1], generated_ids[:, 1:])
-    
+    model.train()
     return generated_ids, generated_attention_mask, log_prob_old, value_old, reward, log_prob_ref
 
 

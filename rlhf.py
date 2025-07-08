@@ -136,8 +136,7 @@ def train(args):
                 batch['input_ids'],
                 batch['attention_mask'],
                 pad=pad,
-                eos=eos,
-                prompt_length=max_length
+                eos=eos
             )
             if generated_ids is None:
                 continue
@@ -216,7 +215,7 @@ def train(args):
                     print(gen_text)
                     print(color_text("\n" + center("Chosen Response"), "yellow"))
                     print(answer_text)
-                    print(color_text(center(""), "magenta"))
+                    print(color_text("\n" + center(""), "magenta"))
 
                 model_actor.train()
     

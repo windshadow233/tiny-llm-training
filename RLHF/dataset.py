@@ -4,6 +4,8 @@ import torch
 from torch.utils.data import Dataset
 
 from RLHF.utils import pad_to_left
+from utils import MODEL_NAME
+
 
 
 class RLHFDataset(Dataset):
@@ -14,7 +16,7 @@ class RLHFDataset(Dataset):
             self.dataset = dataset.select(range(start, end))
         else:
             self.dataset = dataset
-        self.tokenizer = AutoTokenizer.from_pretrained('m-a-p/CT-LLM-Base', trust_remote_code=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, trust_remote_code=True)
         self.max_length = max_length
 
     def __len__(self):
