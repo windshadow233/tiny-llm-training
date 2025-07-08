@@ -1,19 +1,17 @@
-from transformers import AutoTokenizer
 from datasets import load_dataset
 import torch
 from torch.utils.data import Dataset
-from utils import MODEL_NAME
 
 
 class RMDataset(Dataset):
-    def __init__(self, split='train', data_range=None, max_length=512):
+    def __init__(self, tokenizer, split='train', data_range=None, max_length=512):
         dataset = load_dataset('OpenLLMAI/comparison_data', split=split)
         if isinstance(data_range, tuple) and len(data_range) == 2:
             start, end = data_range
             self.dataset = dataset.select(range(start, end))
         else:
             self.dataset = dataset
-        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, trust_remote_code=True)
+        self.tokenizer = tokenizer
         self.max_length = max_length
 
     def __len__(self):

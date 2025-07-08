@@ -1,4 +1,4 @@
-from transformers import get_scheduler
+from transformers import get_scheduler, AutoTokenizer
 import torch
 from torch.nn.functional import logsigmoid
 from torch.optim import AdamW
@@ -12,7 +12,7 @@ import sys
 
 from DPO.dataset import DPODataset, collate_fn, masked_sum
 from RLHF.utils import calculate_action_logsoftmax
-from utils import color_text, center, load_model
+from utils import color_text, center, load_model, MODEL_NAME
 
 logging.basicConfig(level=logging.INFO)
 
@@ -36,8 +36,8 @@ def parse_args():
 def train(args):
     batch_size = args.batch_size
     max_length = args.max_length
-    dataset = DPODataset(data_range=(args.data_range_start, args.data_range_end), max_length=max_length)
-    tokenizer = dataset.tokenizer
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, trust_remote_code=True, local_files_only=True)
+    dataset = DPODataset(tokenizer=tokenizer, data_range=(args.data_range_start, args.data_range_end), max_length=max_length)
     dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=collate_fn, shuffle=True)
     writer = SummaryWriter(log_dir='runs/dpo')
 
@@ -47,10 +47,11 @@ def train(args):
         mixed_precision="fp16",
         gradient_accumulation_steps=args.gradient_accumulation_steps
     )
-    model = load_model('model/actor')
+    model = load_model('model/sft', torch_dtype='auto')
     lora_parameters = []
     for name, param in model.named_parameters():
         if 'lora' in name:
+            param.data = param.data.float()
             param.requires_grad = True
             lora_parameters.append(param)
         else:
@@ -58,7 +59,7 @@ def train(args):
 
     logging.info("Actor model loaded successfully.")
 
-    model_ref = load_model('model/actor')
+    model_ref = load_model('model/sft', torch_dtype='auto')
     model_ref.eval().requires_grad_(False)
 
     logging.info("Reference model loaded successfully.")

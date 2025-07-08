@@ -1,4 +1,4 @@
-from transformers import get_scheduler
+from transformers import get_scheduler, AutoTokenizer
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -11,7 +11,7 @@ import sys
 from RLHF.model import RewardModel
 from RLHF.dataset import RLHFDataset
 from RLHF.utils import *
-from utils import color_text, load_model, center
+from utils import color_text, load_model, center, MODEL_NAME
 
 logging.basicConfig(level=logging.INFO)
 
@@ -36,8 +36,8 @@ def parse_args():
 def train(args):
     batch_size = args.batch_size
     max_length = args.max_length
-    dataset = RLHFDataset(data_range=(args.data_range_start, args.data_range_end), max_length=max_length)
-    tokenizer = dataset.tokenizer
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, trust_remote_code=True, local_files_only=True)
+    dataset = RLHFDataset(tokenizer=tokenizer, data_range=(args.data_range_start, args.data_range_end), max_length=max_length)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     writer = SummaryWriter(log_dir='runs/rlhf')
 
@@ -47,10 +47,11 @@ def train(args):
         mixed_precision="fp16",
         gradient_accumulation_steps=args.gradient_accumulation_steps
     )
-    model_actor = load_model('model/actor')
+    model_actor = load_model('model/sft', torch_dtype='auto')
     lora_parameters = []
     for name, param in model_actor.named_parameters():
         if 'lora' in name:
+            param.data = param.data.float()
             param.requires_grad = True
             lora_parameters.append(param)
         else:
@@ -58,16 +59,16 @@ def train(args):
 
     logging.info("Actor model loaded successfully.")
 
-    model_ref = load_model('model/actor')
+    model_ref = load_model('model/sft', torch_dtype='auto')
     model_ref.eval().requires_grad_(False)
 
     logging.info("Reference model loaded successfully.")
 
-    model_critic = RewardModel.from_pretrained('model/reward_model')
+    model_critic = RewardModel.from_pretrained('model/reward_model', torch_dtype='auto')
 
     logging.info("Critic model loaded successfully.")
 
-    model_reward = RewardModel.from_pretrained('model/reward_model')
+    model_reward = RewardModel.from_pretrained('model/reward_model', torch_dtype='auto')
     model_reward.eval().requires_grad_(False)
 
     logging.info("Reward model loaded successfully.")

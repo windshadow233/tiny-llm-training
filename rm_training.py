@@ -1,4 +1,4 @@
-from transformers import get_scheduler
+from transformers import get_scheduler, AutoTokenizer
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -10,7 +10,7 @@ import sys
 
 from RM.dataset import RMDataset, collate_fn
 from RM.model import RewardModel
-from utils import color_text, center
+from utils import color_text, center, MODEL_NAME
 
 logging.basicConfig(level=logging.INFO)
 
@@ -33,7 +33,8 @@ def parse_args():
 
 
 def train(args):
-    dataset = RMDataset(data_range=(args.data_range_start, args.data_range_end), max_length=args.max_length)
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, trust_remote_code=True, local_files_only=True)
+    dataset = RMDataset(tokenizer=tokenizer, data_range=(args.data_range_start, args.data_range_end), max_length=args.max_length)
     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn)
     writer = SummaryWriter(log_dir='runs/reward_model')
 

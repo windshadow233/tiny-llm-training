@@ -1,4 +1,4 @@
-from transformers import get_scheduler
+from transformers import get_scheduler, AutoTokenizer
 import torch
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
@@ -20,7 +20,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="SFT with LoRA")
 
     parser.add_argument("--max_length", '-l', type=int, default=256)
-    parser.add_argument("--output_dir", '-o', type=str, default="model/actor")
+    parser.add_argument("--output_dir", '-o', type=str, default="model/sft")
 
     parser.add_argument("--batch_size", '-b', type=int, default=8)
     parser.add_argument("--learning_rate", '-lr', type=float, default=1e-4)
@@ -39,15 +39,15 @@ def train(args):
     batch_size = args.batch_size
 
     # 读取数据
-    dataset = SFTDataset(max_length=max_length)
-    tokenizer = dataset.tokenizer
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, trust_remote_code=True, local_files_only=True)
+    dataset = SFTDataset(tokenizer=tokenizer, max_length=max_length)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     writer = SummaryWriter(log_dir='runs/sft')
 
     logging.info(f"Data loaded successfully. Dataset size: {len(dataset)}")
 
     # 加载模型
-    model = load_model(MODEL_NAME)
+    model = load_model(MODEL_NAME, torch_dtype='auto')
 
     logging.info("Model loaded successfully.")
 
@@ -67,6 +67,7 @@ def train(args):
 
     for name, param in model.named_parameters():
         if "lora" not in name:
+            param.data = param.data.float()
             param.requires_grad = False
         elif param.requires_grad:
             lora_parameters.append(param)
@@ -147,7 +148,7 @@ def train(args):
                 model.train()
 
     output_dir = args.output_dir
-    model.save_pretrained(output_dir)
+    model.half().save_pretrained(output_dir, safe_serialization=True)
     tokenizer.save_pretrained(output_dir)
     logging.info("Training completed and model saved.")
 

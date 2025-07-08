@@ -1,14 +1,12 @@
-from transformers import AutoTokenizer
 from datasets import load_dataset
 import torch
 from torch.utils.data import Dataset
-from utils import MODEL_NAME
 
 
 class SFTDataset(Dataset):
-    def __init__(self, split='train', max_length=512):
+    def __init__(self, tokenizer, split='train', max_length=512):
         self.dataset = load_dataset('shibing624/alpaca-zh', split=split)
-        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, trust_remote_code=True)
+        self.tokenizer = tokenizer
         self.max_length = max_length
 
     def __len__(self):

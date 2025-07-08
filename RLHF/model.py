@@ -28,14 +28,14 @@ class RewardModel(nn.Module):
         return v
 
     def save_pretrained(self, output_dir):
-        self.base_model.save_pretrained(output_dir)
+        self.base_model.half().save_pretrained(output_dir, safe_serialization=True)
         torch.save(self.v_head.state_dict(), os.path.join(output_dir, 'v_head.pt'))
 
     @classmethod
-    def from_pretrained(cls, model_path):
+    def from_pretrained(cls, model_path, torch_dtype=None):
         model = cls()
         model.v_head.load_state_dict(torch.load(os.path.join(model_path, 'v_head.pt')))
-        model.base_model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, torch_dtype='auto')
+        model.base_model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, torch_dtype=torch_dtype)
         return model
 
     @torch.no_grad()
