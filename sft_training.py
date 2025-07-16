@@ -66,10 +66,7 @@ def train(args):
     lora_parameters = []
 
     for name, param in model.named_parameters():
-        if "lora" not in name:
-            param.data = param.data.float()
-            param.requires_grad = False
-        elif param.requires_grad:
+        if 'lora' in name:
             lora_parameters.append(param)
 
     params_count = count_params(model)
