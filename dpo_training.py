@@ -22,7 +22,7 @@ def parse_args():
 
     parser.add_argument("--max_length", '-l', type=int, default=256)
     parser.add_argument("--num_epochs", '-e', type=int, default=1)
-    parser.add_argument("--batch_size", '-b', type=int, default=2)
+    parser.add_argument("--batch_size", '-b', type=int, default=4)
     parser.add_argument("--learning_rate", '-lr', type=float, default=1e-6)
     parser.add_argument("--gradient_accumulation_steps", '-s', type=int, default=8)
     parser.add_argument("--data_range_start", '-ds', type=int, default=0)
@@ -51,11 +51,7 @@ def train(args):
     lora_parameters = []
     for name, param in model.named_parameters():
         if 'lora' in name:
-            param.data = param.data.float()
-            param.requires_grad = True
             lora_parameters.append(param)
-        else:
-            param.requires_grad = False
 
     logging.info("Actor model loaded successfully.")
 

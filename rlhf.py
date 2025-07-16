@@ -39,7 +39,7 @@ def train(args):
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, trust_remote_code=True, local_files_only=True)
     dataset = RLHFDataset(tokenizer=tokenizer, data_range=(args.data_range_start, args.data_range_end), max_length=max_length)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-    writer = SummaryWriter(log_dir='runs/rlhf')
+    # writer = SummaryWriter(log_dir='runs/rlhf')
 
     logging.info(f"Data loaded successfully. Dataset size: {len(dataset)}")
 
@@ -51,11 +51,8 @@ def train(args):
     lora_parameters = []
     for name, param in model_actor.named_parameters():
         if 'lora' in name:
-            param.data = param.data.float()
             param.requires_grad = True
             lora_parameters.append(param)
-        else:
-            param.requires_grad = False
 
     logging.info("Actor model loaded successfully.")
 
