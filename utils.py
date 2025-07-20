@@ -5,8 +5,8 @@ from peft import PeftConfig, PeftModel
 
 
 MODEL_NAME = 'm-a-p/CT-LLM-Base'
-# GRPO_MODEL_NAME = 'Qwen/Qwen2.5-1.5B-Instruct'
-GRPO_MODEL_NAME = 'Qwen/Qwen2.5-Coder-1.5B-Instruct'
+GRPO_MODEL_NAME = 'Qwen/Qwen2.5-1.5B-Instruct'
+# GRPO_MODEL_NAME = 'Qwen/Qwen2.5-Coder-1.5B-Instruct'
 
 
 def color_text(text, color):
