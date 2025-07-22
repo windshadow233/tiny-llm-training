@@ -5,7 +5,6 @@ from torch.utils.data import Dataset
 from RLHF.utils import pad_to_left
 
 
-
 class RLHFDataset(Dataset):
     def __init__(self, tokenizer, split='train', data_range=None, max_length=512):
         dataset = load_dataset('OpenLLMAI/comparison_data', split=split)

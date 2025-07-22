@@ -23,6 +23,11 @@ Then, provide your numeric answer between <answer> and </answer>. For example:
 ...
 </answer>
 """
+#         self.system_prompt = """You are given a problem.
+# Think about the problem and provide your working out.
+# Place it between <think> and </think>.
+# Then, provide your python code in a ```python ... ``` fenced block.
+# You should print the answer at the end of your code."""
 
     def __len__(self):
         return len(self.dataset)
@@ -42,10 +47,7 @@ Then, provide your numeric answer between <answer> and </answer>. For example:
             {"role": "user", 'content': question}
         ], add_generation_prompt=True, tokenize=False)
         
-        inputs = self.tokenizer(prompt, padding='max_length', max_length=self.max_length, truncation=True, return_tensors='pt')
-        inputs['input_ids'] = inputs['input_ids'][0]
-        inputs['attention_mask'] = inputs['attention_mask'][0]
-        inputs['answer'] = str(answer)
-        inputs['prompt'] = prompt
-        
-        return inputs
+        return {
+            'prompt': prompt,
+            'answer': str(answer)
+        }

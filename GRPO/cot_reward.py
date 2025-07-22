@@ -7,9 +7,9 @@ NUMBER_PATTERN = re.compile(r'-?\d+(?:\.\d+)?')
 
 
 def extract_answer(text):
-    answer_text = ANSWER_PATTERN.search(text)
+    answer_text = ANSWER_PATTERN.findall(text)
     if answer_text:
-        ans = answer_text.group(1).strip().replace(',', '')
+        ans = answer_text[-1].strip().replace(',', '')
         if NUMBER_PATTERN.fullmatch(ans):
             return True, ans
         numbers = NUMBER_PATTERN.findall(ans)
@@ -75,10 +75,3 @@ def strict_format_reward(prompt, responses, answer):
 def soft_format_reward(prompt, responses, answer):
     return [format_score(response) for response in responses]
 
-
-
-REWARD_FCNS = {
-    'Accuracy': accuracy_reward,
-    'Strict Format': strict_format_reward,
-    'Soft Format': soft_format_reward,
-}
