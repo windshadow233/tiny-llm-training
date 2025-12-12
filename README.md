@@ -6,4 +6,4 @@
 
 不甘于此，我想在有限的资源下学习一些相关的算法，遂~~骗~~（炼丹人的事怎么能叫骗呢）借了实验室的24G显存的GPU，尝试微调一个迷你大语言模型，试图搞清楚训练的流程。
 
-[相关博客](https://blog.fyz666.xyz/categories/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E8%AE%AD%E7%BB%83/)
+[相关博客](https://blog.fyz666.xyz/categories/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%AE%9E%E8%B7%B5/)
